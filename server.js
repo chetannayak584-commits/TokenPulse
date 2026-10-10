@@ -92,10 +92,10 @@ app.get('/js/supabase.js', (req, res) => {
   res.status(404).send('Supabase SDK bundle not found');
 });
 
-// Dedicated Authentication Page Routes
-app.get('/login', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/signup', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
-app.get('/auth', (req, res) => res.sendFile(path.join(__dirname, 'public', 'login.html')));
+// Dedicated Authentication Page Routes (Bypassed: redirect directly to main dashboard)
+app.get('/login', (req, res) => res.redirect('/'));
+app.get('/signup', (req, res) => res.redirect('/'));
+app.get('/auth', (req, res) => res.redirect('/'));
 
 // Public Auth Client Configuration (Exposes ONLY public URL and Anon Key, never secrets)
 app.get('/api/auth/config', (req, res) => {

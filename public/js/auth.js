@@ -309,7 +309,7 @@ export async function logoutUser() {
     try {
       localStorage.removeItem('tokenpulse-auth-session');
     } catch (_) {}
-    window.location.href = '/login';
+    window.location.href = '/';
   }
 }
 
@@ -370,21 +370,14 @@ export async function setupAuthStateListener(callback) {
 
 /**
  * Route protection guard for dashboard pages
- * Redirects unauthenticated users to /login
+ * Authentication bypassed — grants immediate access to main workspace
  */
 export async function requireAuth() {
-  const config = await getAuthConfig();
-  
-  // If Supabase is configured, enforce strict authenticated session
-  if (config.configured) {
-    const session = await getCurrentSession();
-    if (!session) {
-      window.location.href = '/login';
-      return null;
+  return {
+    user: {
+      id: 'usr_admin',
+      email: 'admin@tokenpulse.io',
+      role: 'authenticated'
     }
-    return session;
-  } else {
-    // Supabase credentials not configured in environment
-    return null;
-  }
+  };
 }

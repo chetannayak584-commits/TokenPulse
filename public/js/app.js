@@ -89,41 +89,19 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 });
 
-async function setupAuthHeader() {
+function setupAuthHeader() {
+  const userEmailEl = document.getElementById('user-display-email');
+  if (userEmailEl) {
+    userEmailEl.textContent = 'Workspace Active';
+    userEmailEl.title = 'TokenPulse LLM FinOps Observability Platform';
+  }
+  const badge = document.getElementById('user-profile-badge');
+  if (badge) {
+    badge.style.borderColor = 'rgba(16, 185, 129, 0.4)';
+  }
   const logoutBtn = document.getElementById('btn-logout');
   if (logoutBtn) {
-    logoutBtn.addEventListener('click', () => {
-      logoutUser();
-    });
-  }
-
-  try {
-    const config = await getAuthConfig();
-    if (config.configured) {
-      const session = await getCurrentSession();
-      if (!session) {
-        window.location.href = '/login';
-        return;
-      }
-      const user = session.user;
-      const userEmailEl = document.getElementById('user-display-email');
-      if (userEmailEl && user) {
-        userEmailEl.textContent = user.email || user.user_metadata?.full_name || 'Authenticated';
-        userEmailEl.title = user.email;
-      }
-    } else {
-      const userEmailEl = document.getElementById('user-display-email');
-      if (userEmailEl) {
-        userEmailEl.textContent = 'Demo Mode (No Auth)';
-        userEmailEl.title = 'Configure SUPABASE_URL and SUPABASE_ANON_KEY to enforce Supabase Auth';
-      }
-      const badge = document.getElementById('user-profile-badge');
-      if (badge) {
-        badge.style.borderColor = 'rgba(245, 158, 11, 0.4)';
-      }
-    }
-  } catch (err) {
-    console.warn('Auth header init warning:', err);
+    logoutBtn.style.display = 'none';
   }
 }
 
