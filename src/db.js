@@ -431,23 +431,23 @@ function buildWhereClause(filters = {}) {
   const params = [];
 
   if (filters.team && filters.team !== 'all') {
-    conditions.push('team = ?');
+    conditions.push('team = ? COLLATE NOCASE');
     params.push(filters.team);
   }
   if (filters.feature && filters.feature !== 'all') {
-    conditions.push('feature = ?');
+    conditions.push('feature = ? COLLATE NOCASE');
     params.push(filters.feature);
   }
   if (filters.model && filters.model !== 'all') {
-    conditions.push('model = ?');
+    conditions.push('model = ? COLLATE NOCASE');
     params.push(filters.model);
   }
   if (filters.provider && filters.provider !== 'all') {
-    conditions.push('provider = ?');
+    conditions.push('provider = ? COLLATE NOCASE');
     params.push(filters.provider);
   }
   if (filters.user && filters.user !== 'all') {
-    conditions.push('user_id = ?');
+    conditions.push('user_id = ? COLLATE NOCASE');
     params.push(filters.user);
   }
 
@@ -732,7 +732,6 @@ export function seedSampleData(count = 100) {
 
   const pricing = getPricingTable();
   const now = Date.now();
-  const sevenDaysAgo = now - (7 * 24 * 60 * 60 * 1000);
 
   const insertStmt = db.prepare(`
     INSERT INTO requests (
@@ -751,7 +750,66 @@ export function seedSampleData(count = 100) {
   `);
 
   for (let i = 0; i < count; i++) {
-    const teamObj = teams[Math.floor(Math.random() * teams.length)];
+    // Realistic multi-period enterprise timestamp and team distribution:
+    // 35% in last 24h, 35% in 1-7d, 30% in 7-30d
+    let timestamp;
+    let teamObj;
+
+    if (i < Math.floor(count * 0.35)) {
+      // Last 24 hours: high Support ticket automation and Core Engineering CI runs
+      timestamp = Math.floor(now - Math.random() * (24 * 60 * 60 * 1000));
+      const weights = [
+        { name: 'Customer Support', w: 40 },
+        { name: 'Core Engineering', w: 35 },
+        { name: 'Data Science', w: 12 },
+        { name: 'Marketing & Content', w: 7 },
+        { name: 'Product Growth', w: 6 }
+      ];
+      const r = Math.random() * 100;
+      let acc = 0;
+      let chosenTeamName = 'Customer Support';
+      for (const tw of weights) {
+        acc += tw.w;
+        if (r <= acc) { chosenTeamName = tw.name; break; }
+      }
+      teamObj = teams.find(t => t.name === chosenTeamName) || teams[0];
+    } else if (i < Math.floor(count * 0.70)) {
+      // 1 to 7 days: active engineering, growth experiments, and support
+      timestamp = Math.floor(now - (1 + Math.random() * 6) * 24 * 60 * 60 * 1000);
+      const weights = [
+        { name: 'Core Engineering', w: 35 },
+        { name: 'Customer Support', w: 25 },
+        { name: 'Product Growth', w: 20 },
+        { name: 'Data Science', w: 12 },
+        { name: 'Marketing & Content', w: 8 }
+      ];
+      const r = Math.random() * 100;
+      let acc = 0;
+      let chosenTeamName = 'Core Engineering';
+      for (const tw of weights) {
+        acc += tw.w;
+        if (r <= acc) { chosenTeamName = tw.name; break; }
+      }
+      teamObj = teams.find(t => t.name === chosenTeamName) || teams[0];
+    } else {
+      // 7 to 30 days: historical monthly data with high Marketing campaigns and Data Science batch pipelines
+      timestamp = Math.floor(now - (7 + Math.random() * 23) * 24 * 60 * 60 * 1000);
+      const weights = [
+        { name: 'Marketing & Content', w: 45 },
+        { name: 'Data Science', w: 30 },
+        { name: 'Core Engineering', w: 15 },
+        { name: 'Customer Support', w: 10 }
+      ];
+      const r = Math.random() * 100;
+      let acc = 0;
+      let chosenTeamName = 'Marketing & Content';
+      for (const tw of weights) {
+        acc += tw.w;
+        if (r <= acc) { chosenTeamName = tw.name; break; }
+      }
+      teamObj = teams.find(t => t.name === chosenTeamName) || teams[0];
+    }
+
     const feature = teamObj.features[Math.floor(Math.random() * teamObj.features.length)];
     const user = teamObj.users[Math.floor(Math.random() * teamObj.users.length)];
     
@@ -771,8 +829,6 @@ export function seedSampleData(count = 100) {
     const cachedTokens = Math.random() < chosenModel.cacheChance ? Math.floor(promptTokens * 0.4) : 0;
 
     const costData = calculateCost(chosenModel.id, promptTokens, completionTokens, pricing, { cachedTokens });
-
-    const timestamp = Math.floor(sevenDaysAgo + Math.random() * (now - sevenDaysAgo));
     const isoTimestamp = new Date(timestamp).toISOString();
     const latency = Math.floor(Math.random() * 380) + 110;
     const reqId = `req_${Math.random().toString(36).substring(2, 9)}${Date.now().toString(36).substring(4)}`;

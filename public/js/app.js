@@ -181,6 +181,11 @@ function setupFilterControls() {
 
   teamSelect.addEventListener('change', (e) => {
     state.filters.team = e.target.value;
+    if (state.filters.team !== 'all' && state.filters.feature !== 'all') {
+      const featEl = document.getElementById('filter-feature');
+      if (featEl) featEl.value = 'all';
+      state.filters.feature = 'all';
+    }
     triggerFilterRefresh();
   });
 
@@ -269,7 +274,7 @@ async function fetchAnalytics() {
     state.analytics = json.data;
     renderKPIs(json.data.summary);
     updateFilterOptions(json.data.filter_options);
-    updateDashboardCharts(json.data);
+    updateDashboardCharts(json.data, state.filters);
     renderBreakdownTable();
   } catch (err) {
     if (reqId === currentAnalyticsReqId) {
